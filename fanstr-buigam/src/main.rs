@@ -31,6 +31,7 @@ enum Direction {
 enum MovementError {
     NoBeingInSquare,
     OutOfBounds,
+    BeingInDestinationSquare
 }
 
 struct Square {
@@ -67,18 +68,19 @@ impl Grid {
                            coord: (usize, usize),
                            dir: Direction)
                            -> Result<(usize, usize), MovementError> {
-        let square = self.squares
+
+        let origin_square = self.squares
             .get(coord.0 * self.size.0 + coord.1)
             .expect("Index out of bounds trying to get being");
 
-        match square.beings {
+        match origin_square.beings {
             Some(ref being) => being,
             None => return Err(MovementError::NoBeingInSquare),
         };
 
         let new_x = match dir {
-            Direction::West => coord.0 + 1,
-            Direction::East => {
+            Direction::East => coord.0 + 1,
+            Direction::West => {
                 if let Some(val) = coord.0.checked_sub(1) {
                     val
                 } else {
@@ -102,6 +104,14 @@ impl Grid {
 
         if new_x >= self.size.0 || new_y >= self.size.1 {
             return Err(MovementError::OutOfBounds);
+        }
+
+        let destination_square = self.squares
+            .get(coord.0 * self.size.0 + coord.1)
+            .expect("Index out of bounds trying to get being");
+
+        if destination_square.beings.is_some() {
+            return Err(MovementError::BeingInDestinationSquare);
         }
 
         Ok((new_x, new_y))
@@ -150,7 +160,16 @@ mod tests {
     fn test_move_being_out_of_grids_end() {
         let mut grid = ::Grid::generate_empty(3, 3);
         grid.squares[3 * 2 + 2].beings = Some(::Being::Human {});
-        assert_eq!(grid.move_being_in_coord((2, 2), ::Direction::West),
+        assert_eq!(grid.move_being_in_coord((2, 2), ::Direction::East),
                    Err(::MovementError::OutOfBounds));
+    }
+
+    #[test]
+    fn test_move_on_square_occupied_by_being() {
+        let mut grid = ::Grid::generate_empty(3, 3);
+        grid.squares[0].beings = Some(::Being::Human {});
+        grid.squares[1].beings = Some(::Being::Human {});
+        assert_eq!(grid.move_being_in_coord((0, 0), ::Direction::East),
+                   Err(::MovementError::BeingInDestinationSquare));
     }
 }
