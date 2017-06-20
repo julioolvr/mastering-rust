@@ -18,9 +18,11 @@ impl WordStore {
     *count += 1;
   }
 
-  fn display(self) {
+  fn display(self, min: u64) {
     for (key, value) in self.0.iter() {
-      println!("{}: {}", key, value);
+      if value >= &min {
+        println!("{}: {}", key, value);
+      }
     }
   }
 }
@@ -48,5 +50,5 @@ fn main() {
     }
   }
 
-  word_store.display();
+  word_store.display(8);
 }
