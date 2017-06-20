@@ -1,7 +1,6 @@
 #[derive(PartialEq, Debug)]
 enum TerrainGround {
     Soil,
-    #[allow(dead_code)]
     Stone,
 }
 
@@ -31,7 +30,8 @@ enum Direction {
 enum MovementError {
     NoBeingInSquare,
     OutOfBounds,
-    BeingInDestinationSquare
+    BeingInDestinationSquare,
+    StoneInDestinationSquare
 }
 
 struct Square {
@@ -114,6 +114,12 @@ impl Grid {
             return Err(MovementError::BeingInDestinationSquare);
         }
 
+        if let Some(ref block) = destination_square.block {
+            if *block == TerrainBlock::Stone {
+                return Err(MovementError::StoneInDestinationSquare);
+            }
+        }
+
         Ok((new_x, new_y))
     }
 }
@@ -169,6 +175,15 @@ mod tests {
         let mut grid = ::Grid::generate_empty(3, 3);
         grid.squares[0].beings = Some(::Being::Human {});
         grid.squares[1].beings = Some(::Being::Human {});
+        assert_eq!(grid.move_being_in_coord((0, 0), ::Direction::East),
+                   Err(::MovementError::BeingInDestinationSquare));
+    }
+
+    #[test]
+    fn test_move_on_square_with_stone() {
+        let mut grid = ::Grid::generate_empty(3, 3);
+        grid.squares[0].beings = Some(::Being::Human {});
+        grid.squares[1].block = Some(::TerrainBlock::Stone);
         assert_eq!(grid.move_being_in_coord((0, 0), ::Direction::East),
                    Err(::MovementError::BeingInDestinationSquare));
     }
