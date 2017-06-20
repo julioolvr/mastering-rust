@@ -19,7 +19,10 @@ impl WordStore {
   }
 
   fn display(self, min: u64) {
-    for (key, value) in self.0.iter() {
+    let mut sorted_results: Vec<_> = self.0.iter().collect();
+    sorted_results.sort_by(|a, b| b.1.cmp(a.1));
+
+    for (key, value) in sorted_results {
       if value >= &min {
         println!("{}: {}", key, value);
       }
